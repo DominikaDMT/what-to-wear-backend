@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const clothesRoutes = require('./routes/clothesRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -32,4 +33,14 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || 'An uknown error occurred!' });
 });
 
-app.listen(port);
+// returns promise
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_NAME}.mwtky.mongodb.net/what-to-wear?retryWrites=true&w=majority`, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}
+  )
+  .then(() => {
+    app.listen(port);
+  })
+  .catch((err) => {
+    console.log(err);
+  });

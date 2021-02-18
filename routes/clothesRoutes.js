@@ -16,7 +16,7 @@ router.patch(
 
 router.delete('/item/:itemid', clothesControllers.deleteItem);
 
-router.get('/all', clothesControllers.getAllItems);
+router.get('/all/:userid', clothesControllers.getAllItems);
 
 router.post(
   '/newitem',

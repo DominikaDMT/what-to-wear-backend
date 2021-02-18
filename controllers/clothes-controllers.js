@@ -1,110 +1,202 @@
 const HttpError = require('../models/http-error');
+const mongoose = require('mongoose');
 const { v4: uuid } = require('uuid');
-
 const { validationResult } = require('express-validator');
 
-let DUMMY_CLOTHES = [
-  {
-    id: 1,
-    name: 'shirt',
-    color: 'black',
-    image:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ZQPPICAGwol8jtic7wP8f_dh7Z5CK57jMtUCUT4_zpfHmPtZAvsam3pXhp9FWv1edVkDx3E&usqp=CAc',
-    level: 1,
-    creator: 'u1',
-  },
-  {
-    id: 2,
-    name: 'shirt',
-    color: 'green',
-    image:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ZQPPICAGwol8jtic7wP8f_dh7Z5CK57jMtUCUT4_zpfHmPtZAvsam3pXhp9FWv1edVkDx3E&usqp=CAc',
-    level: 1,
-    creator: 'u1',
-  },
-  {
-    id: 3,
-    name: 'shirt',
-    color: 'yellow',
-    image:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ZQPPICAGwol8jtic7wP8f_dh7Z5CK57jMtUCUT4_zpfHmPtZAvsam3pXhp9FWv1edVkDx3E&usqp=CAc',
-    level: 1,
-    creator: 'u1',
-  },
-  {
-    id: 4,
-    name: 'shirt',
-    color: 'pink',
-    image:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ZQPPICAGwol8jtic7wP8f_dh7Z5CK57jMtUCUT4_zpfHmPtZAvsam3pXhp9FWv1edVkDx3E&usqp=CAc',
-    level: 1,
-    creator: 'u1',
-  },
-  {
-    id: 5,
-    name: 'shirt',
-    color: 'geen',
-    image:
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ4ZQPPICAGwol8jtic7wP8f_dh7Z5CK57jMtUCUT4_zpfHmPtZAvsam3pXhp9FWv1edVkDx3E&usqp=CAc',
-    level: 1,
-    creator: 'u1',
-  },
-];
+const Cloth = require('../models/cloth');
+const User = require('../models/user');
 
-const getItemById = (req, res, next) => {
+const getItemById = async (req, res, next) => {
   const itemId = req.params.itemid;
-  const item = DUMMY_CLOTHES.find((item) => item.id === +itemId);
+
+  // findById nie zwraca promisa, ale można użyć try / catch
+  // .exec() <- zwraca promise
+
+  let item;
+  try {
+    item = await Cloth.findById(itemId);
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not find an item',
+      500
+    );
+    return next(error);
+  }
 
   if (!item) {
-    // next(error) lub opcjonalnie throw an error, ale tylko w synchronicznym kodzie
-    throw new HttpError('Could not find an item for the provided id', 404);
+    // next(error) lub opcjonalnie throw an error (ale nie w async, bo musi być rturn next), ale tylko w synchronicznym kodzie
+    const error = new HttpError(
+      'Could not find an item for the provided id',
+      404
+    );
+    return next(error);
   }
 
-  res.json({ item });
+  res.json({ item: item.toObject({ getters: true }) });
 };
 
-const editItem = (req, res, next) => {
+const editItem = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError('Invalid inputs passed, please check your data', 422);
+    const error = new HttpError(
+      'Invalid inputs passed, please check your data',
+      422
+    );
+    return next(error);
   }
   const itemId = req.params.itemid;
-  const { color, level } = req.body;
-  const item = DUMMY_CLOTHES.find((item) => item.id === +itemId);
-  const index = DUMMY_CLOTHES.indexOf(item);
-  const editedItem = { ...item, color, level };
-  DUMMY_CLOTHES[index] = editedItem;
-  res.status(200).json({ item: editedItem });
+  const { name, color, level, brand } = req.body;
+
+  let item;
+  try {
+    item = await Cloth.findById(itemId);
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not find item',
+      500
+    );
+    return next(error);
+  }
+
+  item.name = name;
+  item.color = color;
+  item.level = level;
+  item.brand = brand;
+
+  try {
+    await item.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not update an item',
+      500
+    );
+    return next(error);
+  }
+
+  res.status(200).json({ item: item.toObject({ getters: true }) });
 };
 
-const deleteItem = (req, res, next) => {
+const deleteItem = async (req, res, next) => {
   const itemId = req.params.itemid;
-  if (!DUMMY_CLOTHES.find((item) => item.id === +itemId)) {
-    throw new HttpError('Could not find an item for a provided id', 404);
+
+  let item;
+  try {
+    // usunięcie elementu też u Usera w bazie
+    // populate działa, ponieważ w schemacie jest ustanowione połączenie przez ref
+    item = await Cloth.findById(itemId).populate('creator');
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not delete an item',
+      500
+    );
+    return next(error);
   }
-  DUMMY_CLOTHES = DUMMY_CLOTHES.filter((item) => item.id !== +itemId);
+
+  if (!item) {
+    const error = new HttpError(
+      'Could not find an item for the provided id',
+      404
+    );
+    return next(error);
+  }
+
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await item.remove({ session: session });
+    // pull usuwa id
+    item.creator.clothes.pull(item);
+    await item.creator.save({ session: session });
+    await session.commitTransaction();
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not delete an item',
+      500
+    );
+    return next(error);
+  }
+
   res.status(200).json({ message: 'Deleted item' });
 };
 
-const getAllItems = (req, res, next) => {
-  res.json({ DUMMY_CLOTHES });
+const getAllItems = async (req, res, next) => {
+  const creatorId = req.params.userid;
+
+  let allItems;
+  // let userWithClothes;
+  try {
+    allItems = await Cloth.find({ creator: creatorId });
+    // lub:
+    // userWithClothes = await User.findById(creatorId).populate('clothes');
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not load the items',
+      500
+    );
+    return next(error);
+  }
+  if (!allItems || allItems.length === 0) {
+    // if (!userWithClothes || userWithClothes.clothes.length === 0) {
+    const error = new HttpError('Could not find items for that user', 404);
+    return next(error);
+  }
+
+  res.json({
+    allItems: allItems.map((item) => item.toObject({ getters: true })),
+    // allItems: userWithClothes.clothes.map((item) => item.toObject({ getters: true })),
+  });
 };
 
-const createItem = (req, res, next) => {
+const createItem = async (req, res, next) => {
   // spr czy są jakieś errory
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError('Invalid inputs passed, please check your data', 422);
+    const error = new HttpError(
+      'Invalid inputs passed, please check your data',
+      422
+    );
+    return next(error);
   }
-  const { color, level, image, creator } = req.body;
-  const createdItem = {
-    id: uuid(),
-    color,
-    level,
+  const { name, image, color, level, brand, creator } = req.body;
+
+  const createdItem = new Cloth({
+    name,
     image,
+    color,
+    level: +level,
+    brand,
     creator,
-  };
-  DUMMY_CLOTHES.push(createdItem);
+  });
+
+  let user;
+  try {
+    user = await User.findById(creator);
+  } catch (err) {
+    const error = new HttpError('Creating item failed, please try again', 500);
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError(
+      'Could not find a user for the provided id',
+      404
+    );
+    return next(error);
+  }
+
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await createdItem.save({ session: session });
+    // establish connection (only id)
+    user.clothes.push(createdItem);
+    await user.save({ session: session });
+    await session.commitTransaction();
+  } catch (err) {
+    const error = new HttpError('Creating item failed, please try again', 500);
+    return next(error);
+  }
+
   res.status(201).json({ item: createdItem });
 };
 
