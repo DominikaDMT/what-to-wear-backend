@@ -14,6 +14,17 @@ const app = express();
 // zmienia na obiekt lub tablicę, i automatycznie wywołuje next
 app.use(bodyParser.json());
 
+app.use((req, res, next) => {
+  // które domeny powinny mieć dostęp:
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE');
+  next();
+});
+
 // routy są dodane jako middleware
 app.use('/api/clothes', clothesRoutes);
 
@@ -36,7 +47,8 @@ app.use((error, req, res, next) => {
 // returns promise
 mongoose
   .connect(
-    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_NAME}.mwtky.mongodb.net/what-to-wear?retryWrites=true&w=majority`, {useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true}
+    `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_NAME}.mwtky.mongodb.net/what-to-wear?retryWrites=true&w=majority`,
+    { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }
   )
   .then(() => {
     app.listen(port);
