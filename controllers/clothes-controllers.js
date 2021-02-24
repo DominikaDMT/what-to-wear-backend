@@ -60,7 +60,7 @@ const editItem = async (req, res, next) => {
 
   item.name = name;
   item.color = color;
-  item.level = level;
+  item.level = +level;
   item.brand = brand;
 
   try {
