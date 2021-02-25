@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 
 const clothSchema = new Schema({
     name: { type: String },
-    image: { type: String, required: true },
+    image: { type: String},
+    imageURL: { type: String },
     color: { type: String, required: true },
     level: { type: Number, required: true },
     brand: { type: String },

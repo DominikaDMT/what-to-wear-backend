@@ -1,6 +1,7 @@
 const express = require('express');
 const { check } = require('express-validator');
 // check zwróci skonfigurowane middleware
+const fileUploadMiddleware = require('../middleware/file-upload');
 
 const router = express.Router();
 
@@ -20,10 +21,11 @@ router.get('/all/:userid', clothesControllers.getAllItems);
 
 router.post(
   '/newitem',
+  fileUploadMiddleware.single('image'),
   [
     check('level').not().isEmpty(),
     check('color').not().isEmpty(),
-    check('image').isLength({ min: 5 }),
+    // check('image').isLength({ min: 5 }),
   ],
   clothesControllers.createItem
 );

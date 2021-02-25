@@ -60,7 +60,7 @@ const editItem = async (req, res, next) => {
 
   item.name = name;
   item.color = color;
-  item.level = level;
+  item.level = +level;
   item.brand = brand;
 
   try {
@@ -157,11 +157,12 @@ const createItem = async (req, res, next) => {
     );
     return next(error);
   }
-  const { name, image, color, level, brand, creator } = req.body;
+  const { name, image, imageURL, color, level, brand, creator } = req.body;
 
   const createdItem = new Cloth({
     name,
-    image,
+    image: req.file.path,
+    imageURL,
     color,
     level: +level,
     brand,
