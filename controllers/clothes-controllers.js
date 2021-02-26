@@ -1,6 +1,5 @@
 const HttpError = require('../models/http-error');
 const mongoose = require('mongoose');
-const { v4: uuid } = require('uuid');
 const { validationResult } = require('express-validator');
 const path = require('path');
 const fs = require('fs');
@@ -157,19 +156,21 @@ const getAllItems = async (req, res, next) => {
 
 const createItem = async (req, res, next) => {
   // spr czy są jakieś errory
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new HttpError(
-      'Invalid inputs passed, please check your data',
-      422
-    );
-    return next(error);
-  }
+  // const errors = validationResult(req);
+  // if (!errors.isEmpty()) {
+  //   const error = new HttpError(
+  //     'Invalid inputs passed, please check your data',
+  //     422
+  //   );
+  //   return next(error);
+  // }
   const { name, image, imageURL, color, level, brand, creator } = req.body;
 
   const createdItem = new Cloth({
     name,
-    image: image ? ('http://localhost:5000/' + path.normalize(req.file.path)) : '',
+    // image: image ? ('http://localhost:5000/' + path.normalize(req.file.path)) : '',
+    image: req.file.buffer.toString('base64'),
+    imageMimeType: req.file.mimetype,
     imageURL,
     color,
     level: +level,
