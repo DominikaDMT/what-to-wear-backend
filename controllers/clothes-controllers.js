@@ -2,6 +2,8 @@ const HttpError = require('../models/http-error');
 const mongoose = require('mongoose');
 const { v4: uuid } = require('uuid');
 const { validationResult } = require('express-validator');
+const path = require('path');
+const fs = require('fs');
 
 const Cloth = require('../models/cloth');
 const User = require('../models/user');
@@ -100,6 +102,8 @@ const deleteItem = async (req, res, next) => {
     return next(error);
   }
 
+  const itemFile = item.image;
+
   try {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -115,6 +119,10 @@ const deleteItem = async (req, res, next) => {
     );
     return next(error);
   }
+
+  fs.unlink(itemFile, err => {
+    console.log(err);
+  })
 
   res.status(200).json({ message: 'Deleted item' });
 };
@@ -161,7 +169,7 @@ const createItem = async (req, res, next) => {
 
   const createdItem = new Cloth({
     name,
-    image: req.file.path,
+    image: image ? ('http://localhost:5000/' + path.normalize(req.file.path)) : '',
     imageURL,
     color,
     level: +level,
