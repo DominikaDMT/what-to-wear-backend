@@ -2,6 +2,7 @@ const HttpError = require('../models/http-error');
 const mongoose = require('mongoose');
 const { validationResult } = require('express-validator');
 const path = require('path');
+const mongodb = require('mongodb');
 const fs = require('fs');
 
 const Cloth = require('../models/cloth');
@@ -169,7 +170,8 @@ const createItem = async (req, res, next) => {
   const createdItem = new Cloth({
     name,
     // image: image ? ('http://localhost:5000/' + path.normalize(req.file.path)) : '',
-    image: req.file.buffer.toString('base64'),
+    // image: req.file.buffer.toString('base64'),
+    image: new mongodb.Binary(req.file.buffer),
     imageMimeType: req.file.mimetype,
     imageURL,
     color,
