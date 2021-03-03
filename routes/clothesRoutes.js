@@ -7,6 +7,10 @@ const router = express.Router();
 
 const clothesControllers = require('../controllers/clothes-controllers');
 
+// router.get('item/photo/:itemid', clothesControllers.getPhotoById);
+
+router.post('/item/random', clothesControllers.getRandomItem);
+
 router.get('/item/:itemid', clothesControllers.getItemById);
 
 router.patch(

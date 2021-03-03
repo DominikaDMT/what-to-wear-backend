@@ -37,6 +37,47 @@ const getItemById = async (req, res, next) => {
   res.json({ item: item.toObject({ getters: true }) });
 };
 
+const getRandomItem = async (req, res, next) => {
+  const { level, creatorId } = req.body;
+
+  let item;
+  try {
+    let count = await Cloth.countDocuments({level: level, creator: creatorId})
+    const random = Math.floor(Math.random() * count);
+    item = await Cloth.findOne({level: level, creator: creatorId}, '-color -brand -creator -level -name').skip(random);
+  } catch (err) {}
+  res.json({ item: item.toObject({getters: true}) });
+};
+
+// const getPhotoById = async (req, res, next) => {
+//   const itemId = req.params.itemid;
+
+//   let imageData;
+//   try {
+//     imageData = await Cloth.findById(itemId, 'image, imageURL');
+//   } catch (err) {
+//     const error = new HttpError('Fetching image failed', 500);
+//     return next(error);
+//   }
+
+//   if (imageData) {
+//     const error = new HttpError(
+//       'Could not find an image for the provided id',
+//       404
+//     );
+//     return next(error);
+//   }
+
+//   // if (!imageData.image) {
+//   //   imageData = imageData.imageURL;
+//   // } else if (!imageData.imageURL) {
+//   //   imageData = imageData.image
+//   // }
+
+//   res.json({image: image})
+
+// }
+
 const editItem = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -102,8 +143,6 @@ const deleteItem = async (req, res, next) => {
     return next(error);
   }
 
-  const itemFile = item.image;
-
   try {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -119,10 +158,6 @@ const deleteItem = async (req, res, next) => {
     );
     return next(error);
   }
-
-  fs.unlink(itemFile, err => {
-    console.log(err);
-  })
 
   res.status(200).json({ message: 'Deleted item' });
 };
@@ -171,8 +206,8 @@ const createItem = async (req, res, next) => {
     name,
     // image: image ? ('http://localhost:5000/' + path.normalize(req.file.path)) : '',
     // image: req.file.buffer.toString('base64'),
-    image: new mongodb.Binary(req.file.buffer),
-    imageMimeType: req.file.mimetype,
+    image: req.file ? new mongodb.Binary(req.file.buffer): '', 
+    imageMimeType: req.file ? req.file.mimetype: '',
     imageURL,
     color,
     level: +level,
@@ -213,6 +248,8 @@ const createItem = async (req, res, next) => {
 };
 
 exports.getItemById = getItemById;
+exports.getRandomItem = getRandomItem;
+// exports.getPhotoById = getPhotoById;
 exports.getAllItems = getAllItems;
 exports.createItem = createItem;
 exports.editItem = editItem;
