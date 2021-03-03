@@ -101,6 +101,14 @@ const editItem = async (req, res, next) => {
     return next(error);
   }
 
+  if (item.creator.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      'You are not allowed to edit this place',
+      403
+    );
+    return next(error);
+  }
+
   item.name = name;
   item.color = color;
   item.level = +level;
@@ -139,6 +147,15 @@ const deleteItem = async (req, res, next) => {
     const error = new HttpError(
       'Could not find an item for the provided id',
       404
+    );
+    return next(error);
+  }
+
+  // w przypadku populate('creator'), creator jest pełnym obiekitem, a nie tylko id
+  if (item.creator.id !== req.userData.userId) {
+    const error = new HttpError(
+      'You are not allowed to delete this place',
+      403
     );
     return next(error);
   }

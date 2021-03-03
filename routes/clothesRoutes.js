@@ -1,11 +1,15 @@
 const express = require('express');
 const { check } = require('express-validator');
 // check zwróci skonfigurowane middleware
+const clothesControllers = require('../controllers/clothes-controllers');
 const fileUploadMiddleware = require('../middleware/file-upload');
+const checkAuth = require('../middleware/check-auth');
 
 const router = express.Router();
 
-const clothesControllers = require('../controllers/clothes-controllers');
+// middleware, które sprawdza req czy ma token
+router.use(checkAuth);
+
 
 // router.get('item/photo/:itemid', clothesControllers.getPhotoById);
 
