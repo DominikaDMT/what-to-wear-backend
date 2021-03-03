@@ -217,7 +217,7 @@ const createItem = async (req, res, next) => {
   //   );
   //   return next(error);
   // }
-  const { name, image, imageURL, color, level, brand, creator } = req.body;
+  const { name, image, imageURL, color, level, brand } = req.body;
 
   const createdItem = new Cloth({
     name,
@@ -229,12 +229,12 @@ const createItem = async (req, res, next) => {
     color,
     level: +level,
     brand,
-    creator,
+    creator: req.userData.userId,
   });
 
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError('Creating item failed, please try again', 500);
     return next(error);
