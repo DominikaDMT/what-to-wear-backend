@@ -180,12 +180,14 @@ const deleteItem = async (req, res, next) => {
 };
 
 const getAllItems = async (req, res, next) => {
-  const creatorId = req.params.userid;
+
+  const searchParams = req.params.useridandlevel;
+  const [creatorId, level] = searchParams.split('-');
 
   let allItems;
   // let userWithClothes;
   try {
-    allItems = await Cloth.find({ creator: creatorId });
+    allItems = await Cloth.find({ creator: creatorId, level: level });
     // lub:
     // userWithClothes = await User.findById(creatorId).populate('clothes');
   } catch (err) {
