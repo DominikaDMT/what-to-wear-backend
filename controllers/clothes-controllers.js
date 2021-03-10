@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const Cloth = require('../models/cloth');
 const User = require('../models/user');
+const Set = require('../models/set');
 
 const getItemById = async (req, res, next) => {
   const itemId = req.params.itemid;
@@ -209,6 +210,51 @@ const getAllItems = async (req, res, next) => {
   });
 };
 
+const getAllSets = async (req, res, next) => {
+  console.log(req.userData)
+  let sets;
+  try {
+    sets = await Set.find({ creator: req.userData.userId });
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not load sets',
+      500
+    );
+    return next(error);
+  }
+
+  if (!sets || sets.length === 0) {
+    const error = new HttpError('Could not find sets for that user', 404);
+    return next(error);
+  }
+
+  res.json({
+    sets: sets.map((set) => set.toObject({ getters: true })),
+  });
+};
+
+
+const createSet = async (req, res, next) => {
+  const { date, level1, level2, level3 } = req.body;
+
+  const createdSet = new Set({
+    date,
+    level1,
+    level2,
+    level3,
+    creator: req.userData.userId,
+  });
+
+  try {
+    await createdSet.save();
+  } catch (err) {
+    const error = new HttpError('Creating set failed, please try again', 500);
+    return next(error);
+  }
+
+  res.status(201).json({ set: createdSet });
+};
+
 const createItem = async (req, res, next) => {
   // spr czy są jakieś errory
   // const errors = validationResult(req);
@@ -273,3 +319,6 @@ exports.getAllItems = getAllItems;
 exports.createItem = createItem;
 exports.editItem = editItem;
 exports.deleteItem = deleteItem;
+
+exports.createSet = createSet;
+exports.getAllSets = getAllSets;

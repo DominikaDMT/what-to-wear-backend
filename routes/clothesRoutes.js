@@ -25,6 +25,8 @@ router.patch(
 
 router.delete('/item/:itemid', clothesControllers.deleteItem);
 
+router.get('/all/latestsets', clothesControllers.getAllSets)
+
 router.get('/all/:useridandlevel', clothesControllers.getAllItems);
 
 router.post(
@@ -37,5 +39,7 @@ router.post(
   ],
   clothesControllers.createItem
 );
+
+router.post('/newset', clothesControllers.createSet);
 
 module.exports = router;
