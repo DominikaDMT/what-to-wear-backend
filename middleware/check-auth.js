@@ -9,7 +9,7 @@ module.exports = (req, res, next) => {
   try {
     const token = req.headers.authorization.split(' ')[1]; // 'Bearer TOKEN'
     if (!token) {
-      throw new Error('Authentication failed');
+      throw new Error('Authentication failed, token is missed');
     }
     const decodedToken = jwToken.verify(token, process.env.JWTOKEN_PASSWORD);
     req.userData = { userId: decodedToken.userId };

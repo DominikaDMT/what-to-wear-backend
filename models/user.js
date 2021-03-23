@@ -9,6 +9,7 @@ const userSchema = new Schema({
     password: { type: String, required: true, minlength: 6 },
     image: { type: String },
     clothes: [{ type: mongoose.Types.ObjectId, required: true, ref: 'Cloth' }],
+    sets: [{ type: mongoose.Types.ObjectId, required: true, ref: 'Set' }],
   },{ collection: 'users' }
 );
 

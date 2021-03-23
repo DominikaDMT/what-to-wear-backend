@@ -79,6 +79,7 @@ const signup = async (req, res, next) => {
     password: hashedPassword,
     image: image || '',
     clothes: [],
+    sets: [],
   });
 
   try {

@@ -245,8 +245,30 @@ const createSet = async (req, res, next) => {
     creator: req.userData.userId,
   });
 
+  let user;
   try {
-    await createdSet.save();
+    user = await User.findById(req.userData.userId);
+  } catch (err) {
+    const error = new HttpError('Creating set failed, please try again', 500);
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError(
+      'Could not find a user for the provided id',
+      404
+    );
+    return next(error);
+  }
+
+  try {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    await createdSet.save({ session: session });
+    // establish connection (only id)
+    user.sets.push(createdSet);
+    await user.save({ session: session });
+    await session.commitTransaction();
   } catch (err) {
     const error = new HttpError('Creating set failed, please try again', 500);
     return next(error);
