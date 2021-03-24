@@ -46,7 +46,13 @@ const getRandomItem = async (req, res, next) => {
     let count = await Cloth.countDocuments({level: level, creator: creatorId})
     const random = Math.floor(Math.random() * count);
     item = await Cloth.findOne({level: level, creator: creatorId}, '-color -brand -creator -level -name').skip(random);
-  } catch (err) {}
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong, could not get random item',
+      404
+    );
+    return next(error);
+  }
   res.json({ item: item.toObject({getters: true}) });
 };
 
