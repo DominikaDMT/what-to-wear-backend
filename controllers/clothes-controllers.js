@@ -217,7 +217,6 @@ const getAllItems = async (req, res, next) => {
 };
 
 const getAllSets = async (req, res, next) => {
-  console.log(req.userData)
   let sets;
   try {
     sets = await Set.find({ creator: req.userData.userId });
