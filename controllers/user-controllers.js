@@ -1,5 +1,4 @@
 const HttpError = require('../models/http-error');
-const { v4: uuid } = require('uuid');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwToken = require('jsonwebtoken');
@@ -111,7 +110,7 @@ const signup = async (req, res, next) => {
   res
     .status(201)
     .json({
-      user: { id: existingUser.id, email: existingUser.email },
+      user: { id: createdUser.id, email: createdUser.email },
       token: token,
     });
 };
