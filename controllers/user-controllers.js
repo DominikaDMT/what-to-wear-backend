@@ -5,17 +5,11 @@ const jwToken = require('jsonwebtoken');
 
 const User = require('../models/user');
 
-// const errorHandler = (message, code) => {
-//   const error = new HttpError(message, code);
-//   return next(error);
-// }
-
 const getUserById = async (req, res, next) => {
   const userId = req.params.uid;
 
   let user;
   try {
-    // exclude password
     user = await User.findById(userId, '-password');
   } catch (err) {
     const error = new HttpError('Fetching user failed', 500);
@@ -74,7 +68,6 @@ const signup = async (req, res, next) => {
   const createdUser = new User({
     name,
     email,
-    // encrypt password!
     password: hashedPassword,
     image: image || '',
     clothes: [],
@@ -106,13 +99,10 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
-  // res.status(201).json({ user: createdUser.toObject({ getters: true }) });
-  res
-    .status(201)
-    .json({
-      user: { id: createdUser.id, email: createdUser.email },
-      token: token,
-    });
+  res.status(201).json({
+    user: { id: createdUser.id, email: createdUser.email },
+    token: token,
+  });
 };
 
 const login = async (req, res, next) => {
