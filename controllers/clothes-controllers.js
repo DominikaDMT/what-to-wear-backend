@@ -43,7 +43,7 @@ const getRandomItem = async (req, res, next) => {
 
   let item;
   try {
-    let count = await Cloth.countDocuments({level: level, creator: creatorId})
+    const count = await Cloth.countDocuments({level: level, creator: creatorId})
     const random = Math.floor(Math.random() * count);
     item = await Cloth.findOne({level: level, creator: creatorId}, '-color -brand -creator -level -name').skip(random);
   } catch (err) {
